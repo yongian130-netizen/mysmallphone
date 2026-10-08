@@ -1,0 +1,6 @@
+{
+  "name": "ChronoMind — AI Problem-Solver & Memory Agent",
+  "description": "An intelligent AI agent studio featuring custom character personas, voice-to-text input, actionable time-based reminders, and structured problem-solving.",
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

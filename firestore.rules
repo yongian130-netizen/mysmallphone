@@ -1,0 +1,249 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Pillar 4.1: Global Safety Net (Default Deny)
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Phase 3: Hardened Global Helpers
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerifiedUser() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // Validation Blueprint: Character
+    function isValidCharacter(data) {
+      return data.keys().hasAll([
+          'ownerId', 'name', 'role', 'avatarUrl', 'personality',
+          'methodology', 'systemPrompt', 'voiceName', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'ownerId', 'name', 'role', 'avatarUrl', 'personality',
+          'methodology', 'systemPrompt', 'voiceName', 'createdAt', 'updatedAt'
+        ])
+        && data.ownerId is string && isValidId(data.ownerId) && data.ownerId == request.auth.uid
+        && data.name is string && data.name.size() >= 1 && data.name.size() <= 80
+        && data.role is string && data.role.size() >= 1 && data.role.size() <= 120
+        && data.avatarUrl is string && data.avatarUrl.size() >= 0 && data.avatarUrl.size() <= 500
+        && data.personality is string && data.personality.size() >= 1 && data.personality.size() <= 500
+        && data.methodology is string && data.methodology.size() >= 1 && data.methodology.size() <= 160
+        && data.systemPrompt is string && data.systemPrompt.size() >= 1 && data.systemPrompt.size() <= 3000
+        && data.voiceName is string && data.voiceName.size() <= 32
+        && data.voiceName in ['Kore', 'Puck', 'Charon', 'Fenrir', 'Zephyr']
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    // Validation Blueprint: Reminder
+    function isValidReminder(data) {
+      return data.keys().hasAll([
+          'ownerId', 'title', 'contextNote', 'actionPlan', 'dueAtIso',
+          'priority', 'status', 'characterId', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'ownerId', 'title', 'contextNote', 'actionPlan', 'dueAtIso',
+          'priority', 'status', 'characterId', 'createdAt', 'updatedAt'
+        ])
+        && data.ownerId is string && isValidId(data.ownerId) && data.ownerId == request.auth.uid
+        && data.title is string && data.title.size() >= 1 && data.title.size() <= 200
+        && data.contextNote is string && data.contextNote.size() >= 0 && data.contextNote.size() <= 1500
+        && data.actionPlan is string && data.actionPlan.size() >= 1 && data.actionPlan.size() <= 2500
+        && data.dueAtIso is string && data.dueAtIso.size() >= 10 && data.dueAtIso.size() <= 64
+        && data.priority is string && data.priority.size() <= 16
+        && data.priority in ['low', 'medium', 'high', 'critical']
+        && data.status is string && data.status.size() <= 16
+        && data.status in ['scheduled', 'triggered', 'completed']
+        && data.characterId is string && isValidId(data.characterId)
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    // Validation Blueprint: MemoryItem
+    function isValidMemoryItem(data) {
+      return data.keys().hasAll([
+          'ownerId', 'category', 'title', 'content', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'ownerId', 'category', 'title', 'content', 'createdAt', 'updatedAt'
+        ])
+        && data.ownerId is string && isValidId(data.ownerId) && data.ownerId == request.auth.uid
+        && data.category is string && data.category.size() <= 32
+        && data.category in ['problem', 'preference', 'goal', 'fact', 'routine']
+        && data.title is string && data.title.size() >= 1 && data.title.size() <= 160
+        && data.content is string && data.content.size() >= 1 && data.content.size() <= 2000
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    // Validation Blueprint: ChatMessage
+    function isValidChatMessage(data) {
+      return data.keys().hasAll([
+          'ownerId', 'characterId', 'role', 'content', 'createdAt'
+        ])
+        && data.keys().hasOnly([
+          'ownerId', 'characterId', 'role', 'content', 'createdAt'
+        ])
+        && data.ownerId is string && isValidId(data.ownerId) && data.ownerId == request.auth.uid
+        && data.characterId is string && isValidId(data.characterId)
+        && data.role is string && data.role.size() <= 16
+        && data.role in ['user', 'assistant']
+        && data.content is string && data.content.size() >= 1 && data.content.size() <= 8000
+        && data.createdAt is timestamp;
+    }
+
+    // Validation Blueprint: UserSettings
+    function isValidUserSettings(data) {
+      return data.keys().hasAll([
+          'ownerId', 'model', 'thinkingLevel', 'temperature', 'topP', 'topK',
+          'responseStyle', 'autoExtractMemory', 'voiceEngine', 'autoSpeakResponses', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'ownerId', 'model', 'thinkingLevel', 'temperature', 'topP', 'topK',
+          'responseStyle', 'autoExtractMemory', 'voiceEngine', 'autoSpeakResponses', 'updatedAt'
+        ])
+        && data.ownerId is string && isValidId(data.ownerId) && data.ownerId == request.auth.uid
+        && data.model is string && data.model.size() <= 64
+        && data.model in ['gemini-3.8-flash', 'gemini-3.1-flash-lite', 'gemini-flash-latest']
+        && data.thinkingLevel is string && data.thinkingLevel.size() <= 16
+        && data.thinkingLevel in ['HIGH', 'LOW', 'MINIMAL']
+        && data.temperature is number && data.temperature >= 0 && data.temperature <= 2
+        && data.topP is number && data.topP >= 0 && data.topP <= 1
+        && data.topK is number && data.topK >= 1 && data.topK <= 100
+        && data.responseStyle is string && data.responseStyle.size() <= 32
+        && data.responseStyle in ['concise', 'balanced', 'comprehensive']
+        && data.autoExtractMemory is bool
+        && data.voiceEngine is string && data.voiceEngine.size() <= 32
+        && data.voiceEngine in ['gemini-transcribe', 'browser-speech']
+        && data.autoSpeakResponses is bool
+        && data.updatedAt is timestamp;
+    }
+
+    // Collection: /characters/{characterId}
+    match /characters/{characterId} {
+      allow get: if isVerifiedUser() && isValidId(characterId) && existing().ownerId == request.auth.uid;
+      allow list: if isVerifiedUser() && resource.data.ownerId == request.auth.uid;
+      allow create: if isVerifiedUser()
+        && isValidId(characterId)
+        && isValidCharacter(incoming())
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isVerifiedUser()
+        && isValidId(characterId)
+        && isValidCharacter(incoming())
+        && existing().ownerId == request.auth.uid
+        && incoming().ownerId == existing().ownerId
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          incoming().diff(existing()).affectedKeys().hasOnly([
+            'name', 'role', 'avatarUrl', 'personality', 'methodology', 'systemPrompt', 'voiceName', 'updatedAt'
+          ])
+        );
+      allow delete: if isVerifiedUser() && isValidId(characterId) && existing().ownerId == request.auth.uid;
+    }
+
+    // Collection: /reminders/{reminderId}
+    match /reminders/{reminderId} {
+      allow get: if isVerifiedUser() && isValidId(reminderId) && existing().ownerId == request.auth.uid;
+      allow list: if isVerifiedUser() && resource.data.ownerId == request.auth.uid;
+      allow create: if isVerifiedUser()
+        && isValidId(reminderId)
+        && isValidReminder(incoming())
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isVerifiedUser()
+        && isValidId(reminderId)
+        && isValidReminder(incoming())
+        && existing().ownerId == request.auth.uid
+        && existing().status != 'completed'
+        && incoming().ownerId == existing().ownerId
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          // Action 1: Transition status (e.g., scheduled -> triggered or completed)
+          (incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt'])) ||
+          // Action 2: Edit reminder details and schedule
+          (incoming().diff(existing()).affectedKeys().hasOnly([
+            'title', 'contextNote', 'actionPlan', 'dueAtIso', 'priority', 'status', 'characterId', 'updatedAt'
+          ]))
+        );
+      allow delete: if isVerifiedUser() && isValidId(reminderId) && existing().ownerId == request.auth.uid;
+    }
+
+    // Collection: /memories/{memoryId}
+    match /memories/{memoryId} {
+      allow get: if isVerifiedUser() && isValidId(memoryId) && existing().ownerId == request.auth.uid;
+      allow list: if isVerifiedUser() && resource.data.ownerId == request.auth.uid;
+      allow create: if isVerifiedUser()
+        && isValidId(memoryId)
+        && isValidMemoryItem(incoming())
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isVerifiedUser()
+        && isValidId(memoryId)
+        && isValidMemoryItem(incoming())
+        && existing().ownerId == request.auth.uid
+        && incoming().ownerId == existing().ownerId
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          incoming().diff(existing()).affectedKeys().hasOnly(['category', 'title', 'content', 'updatedAt'])
+        );
+      allow delete: if isVerifiedUser() && isValidId(memoryId) && existing().ownerId == request.auth.uid;
+    }
+
+    // Collection: /messages/{messageId}
+    match /messages/{messageId} {
+      allow get: if isVerifiedUser() && isValidId(messageId) && existing().ownerId == request.auth.uid;
+      allow list: if isVerifiedUser() && resource.data.ownerId == request.auth.uid;
+      allow create: if isVerifiedUser()
+        && isValidId(messageId)
+        && isValidChatMessage(incoming())
+        && incoming().createdAt == request.time;
+      allow update: if false;
+      allow delete: if isVerifiedUser() && isValidId(messageId) && existing().ownerId == request.auth.uid;
+    }
+
+    // Collection: /userSettings/{userId}
+    match /userSettings/{userId} {
+      allow get: if isVerifiedUser() && isValidId(userId) && userId == request.auth.uid;
+      allow list: if false;
+      allow create: if isVerifiedUser()
+        && isValidId(userId)
+        && userId == request.auth.uid
+        && isValidUserSettings(incoming())
+        && incoming().updatedAt == request.time;
+      allow update: if isVerifiedUser()
+        && isValidId(userId)
+        && userId == request.auth.uid
+        && isValidUserSettings(incoming())
+        && existing().ownerId == request.auth.uid
+        && incoming().ownerId == existing().ownerId
+        && incoming().updatedAt == request.time
+        && (
+          incoming().diff(existing()).affectedKeys().hasOnly([
+            'ownerId', 'model', 'thinkingLevel', 'temperature', 'topP', 'topK',
+            'responseStyle', 'autoExtractMemory', 'voiceEngine', 'autoSpeakResponses', 'updatedAt'
+          ])
+        );
+      allow delete: if false;
+    }
+  }
+}

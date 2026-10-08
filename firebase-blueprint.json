@@ -1,0 +1,343 @@
+{
+  "entities": {
+    "Character": {
+      "title": "Character",
+      "description": "Custom AI agent persona with specialized problem-solving methodology and voice profile.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "description": "The UID of the user who owns this character.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "name": {
+          "type": "string",
+          "description": "Display name of the AI character.",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "role": {
+          "type": "string",
+          "description": "Role or title of the character.",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "avatarUrl": {
+          "type": "string",
+          "description": "URL or asset path for the character avatar.",
+          "minLength": 0,
+          "maxLength": 500
+        },
+        "personality": {
+          "type": "string",
+          "description": "Core personality traits and tone.",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "methodology": {
+          "type": "string",
+          "description": "Problem-solving framework used by the character.",
+          "minLength": 1,
+          "maxLength": 160
+        },
+        "systemPrompt": {
+          "type": "string",
+          "description": "System instructions guiding the character behavior.",
+          "minLength": 1,
+          "maxLength": 3000
+        },
+        "voiceName": {
+          "type": "string",
+          "description": "Prebuilt Gemini TTS voice identifier.",
+          "enum": ["Kore", "Puck", "Charon", "Fenrir", "Zephyr"]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of creation."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of last update."
+        }
+      },
+      "required": [
+        "ownerId",
+        "name",
+        "role",
+        "avatarUrl",
+        "personality",
+        "methodology",
+        "systemPrompt",
+        "voiceName",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Reminder": {
+      "title": "Reminder",
+      "description": "Time-based reminder with an actionable step-by-step protocol for what the user should do at the scheduled time.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "description": "The UID of the user who owns this reminder.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "title": {
+          "type": "string",
+          "description": "Short title of the reminder.",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "contextNote": {
+          "type": "string",
+          "description": "Background context on why this reminder matters.",
+          "minLength": 0,
+          "maxLength": 1500
+        },
+        "actionPlan": {
+          "type": "string",
+          "description": "Concrete instructions on what the user should do when the reminder triggers.",
+          "minLength": 1,
+          "maxLength": 2500
+        },
+        "dueAtIso": {
+          "type": "string",
+          "description": "Scheduled ISO-8601 date-time string.",
+          "minLength": 10,
+          "maxLength": 64
+        },
+        "priority": {
+          "type": "string",
+          "description": "Urgency level of the reminder.",
+          "enum": ["low", "medium", "high", "critical"]
+        },
+        "status": {
+          "type": "string",
+          "description": "Lifecycle status of the reminder (completed is terminal).",
+          "enum": ["scheduled", "triggered", "completed"]
+        },
+        "characterId": {
+          "type": "string",
+          "description": "ID of the agent character associated with this reminder.",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of creation."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of last update."
+        }
+      },
+      "required": [
+        "ownerId",
+        "title",
+        "contextNote",
+        "actionPlan",
+        "dueAtIso",
+        "priority",
+        "status",
+        "characterId",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "MemoryItem": {
+      "title": "MemoryItem",
+      "description": "Persistent memory fact, problem context, or user preference remembered by the AI agent.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "description": "The UID of the user who owns this memory item.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "category": {
+          "type": "string",
+          "description": "Classification of the memory.",
+          "enum": ["problem", "preference", "goal", "fact", "routine"]
+        },
+        "title": {
+          "type": "string",
+          "description": "Concise summary label for the memory.",
+          "minLength": 1,
+          "maxLength": 160
+        },
+        "content": {
+          "type": "string",
+          "description": "Detailed memory content or problem description.",
+          "minLength": 1,
+          "maxLength": 2000
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of creation."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of last update."
+        }
+      },
+      "required": [
+        "ownerId",
+        "category",
+        "title",
+        "content",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "ChatMessage": {
+      "title": "ChatMessage",
+      "description": "Individual message in a conversation with an AI character.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "description": "The UID of the user who owns this conversation message.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "characterId": {
+          "type": "string",
+          "description": "The ID of the character involved in this message.",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "role": {
+          "type": "string",
+          "description": "Sender role in the conversation.",
+          "enum": ["user", "assistant"]
+        },
+        "content": {
+          "type": "string",
+          "description": "Message text content.",
+          "minLength": 1,
+          "maxLength": 8000
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of message creation."
+        }
+      },
+      "required": [
+        "ownerId",
+        "characterId",
+        "role",
+        "content",
+        "createdAt"
+      ]
+    },
+    "UserSettings": {
+      "title": "UserSettings",
+      "description": "User-specific Gemini API model and voice configuration.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "description": "The UID of the user who owns this configuration.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "model": {
+          "type": "string",
+          "description": "Selected Gemini model identifier.",
+          "enum": ["gemini-3.8-flash", "gemini-3.1-flash-lite", "gemini-flash-latest"]
+        },
+        "thinkingLevel": {
+          "type": "string",
+          "description": "Selected Gemini 3 thinking level.",
+          "enum": ["HIGH", "LOW", "MINIMAL"]
+        },
+        "temperature": {
+          "type": "number",
+          "description": "Sampling temperature between 0 and 2."
+        },
+        "topP": {
+          "type": "number",
+          "description": "Nucleus sampling parameter between 0 and 1."
+        },
+        "topK": {
+          "type": "number",
+          "description": "Top-K sampling parameter between 1 and 100."
+        },
+        "responseStyle": {
+          "type": "string",
+          "description": "Preferred verbosity and structure of responses.",
+          "enum": ["concise", "balanced", "comprehensive"]
+        },
+        "autoExtractMemory": {
+          "type": "boolean",
+          "description": "Whether the agent automatically extracts memories and reminders from chat."
+        },
+        "voiceEngine": {
+          "type": "string",
+          "description": "Preferred speech-to-text engine.",
+          "enum": ["gemini-transcribe", "browser-speech"]
+        },
+        "autoSpeakResponses": {
+          "type": "boolean",
+          "description": "Whether agent replies are automatically spoken via TTS."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of last update."
+        }
+      },
+      "required": [
+        "ownerId",
+        "model",
+        "thinkingLevel",
+        "temperature",
+        "topP",
+        "topK",
+        "responseStyle",
+        "autoExtractMemory",
+        "voiceEngine",
+        "autoSpeakResponses",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/characters/{characterId}": {
+      "schema": { "$ref": "#/entities/Character" },
+      "description": "Stores user-created and customized AI agent personas."
+    },
+    "/reminders/{reminderId}": {
+      "schema": { "$ref": "#/entities/Reminder" },
+      "description": "Stores scheduled reminders and action protocols for the user."
+    },
+    "/memories/{memoryId}": {
+      "schema": { "$ref": "#/entities/MemoryItem" },
+      "description": "Stores long-term memory facts, problems, and preferences."
+    },
+    "/messages/{messageId}": {
+      "schema": { "$ref": "#/entities/ChatMessage" },
+      "description": "Stores conversation history messages per character."
+    },
+    "/userSettings/{userId}": {
+      "schema": { "$ref": "#/entities/UserSettings" },
+      "description": "Stores per-user Gemini API model parameters and voice settings."
+    }
+  }
+}
